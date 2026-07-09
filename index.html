@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Weekly Ticket — Meal Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #14130f;
+    --panel: #1c1a15;
+    --cream: #ede8de;
+    --cream-dim: #a8a396;
+    --gold: #c9a34e;
+    --olive: #6b7a56;
+    --rust: #b0562e;
+    --line: #3a362c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--cream);
+    font-family: 'DM Mono', monospace;
+    padding: 24px 16px 80px;
+  }
+  h1, h2, h3 { font-family: 'Syne', sans-serif; margin: 0; }
+  .masthead {
+    text-align: center;
+    border-bottom: 2px solid var(--gold);
+    padding-bottom: 18px;
+    margin-bottom: 22px;
+  }
+  .masthead .eyebrow {
+    letter-spacing: 0.25em;
+    font-size: 10px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .masthead h1 {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--cream);
+  }
+  .masthead .sub {
+    font-size: 11px;
+    color: var(--cream-dim);
+    margin-top: 6px;
+  }
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+  }
+  .tab {
+    background: none;
+    border: none;
+    color: var(--cream-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+  .tab.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+  }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  .day-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .day-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #221f18;
+    border-bottom: 1px solid var(--line);
+  }
+  .day-head h3 {
+    font-size: 15px;
+    letter-spacing: 0.05em;
+  }
+  .day-cals {
+    font-size: 11px;
+    color: var(--gold);
+  }
+  .meal-row {
+    display: grid;
+    grid-template-columns: 70px 1fr 40px;
+    gap: 10px;
+    align-items: start;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .meal-row:last-child { border-bottom: none; }
+  .meal-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--olive);
+    padding-top: 4px;
+  }
+  select, input[type=text] {
+    width: 100%;
+    background: #0f0e0b;
+    color: var(--cream);
+    border: 1px solid var(--line);
+    font-family: 'DM Mono', monospace;
+    font-size: 12.5px;
+    padding: 7px 8px;
+    border-radius: 2px;
+  }
+  select:focus, input:focus { outline: 1px solid var(--gold); }
+  .meal-cals {
+    font-size: 10px;
+    color: var(--cream-dim);
+    text-align: right;
+    padding-top: 8px;
+  }
+  .benefit-line {
+    font-size: 10.5px;
+    color: var(--cream-dim);
+    font-style: italic;
+    margin-top: 5px;
+    line-height: 1.4;
+    padding-left: 2px;
+    border-left: 2px solid var(--olive);
+    padding-left: 8px;
+  }
+
+  .grocery-wrap {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 4px 0 16px;
+  }
+  .grocery-section {
+    padding: 0 18px;
+  }
+  .grocery-section h3 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    margin: 18px 0 8px;
+    border-bottom: 1px dashed var(--line);
+    padding-bottom: 6px;
+  }
+  .item-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    font-size: 13px;
+  }
+  .item-row input[type=checkbox] {
+    width: 15px; height: 15px;
+    accent-color: var(--gold);
+  }
+  .item-row.checked span { text-decoration: line-through; color: var(--cream-dim); }
+  .item-qty { color: var(--cream-dim); font-size: 11.5px; margin-left: auto; }
+
+  .tip-box {
+    background: #201d16;
+    border-left: 3px solid var(--olive);
+    padding: 12px 14px;
+    font-size: 12px;
+    color: var(--cream-dim);
+    line-height: 1.55;
+    margin: 16px 0;
+  }
+  .tip-box b { color: var(--cream); }
+
+  .btn {
+    background: var(--gold);
+    color: #14130f;
+    border: none;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 11px 18px;
+    border-radius: 2px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 14px;
+  }
+  .btn.secondary {
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--cream-dim);
+  }
+  .summary-strip {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .summary-chip {
+    flex: 1;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 10px 8px;
+    text-align: center;
+  }
+  .summary-chip .num { font-family: 'Syne'; font-size: 18px; color: var(--gold); font-weight: 700; }
+  .summary-chip .label { font-size: 9px; color: var(--cream-dim); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+  .loading { text-align: center; color: var(--cream-dim); font-size: 12px; padding: 20px; }
+  .footnote { font-size: 10px; color: var(--cream-dim); text-align: center; margin-top: 24px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <div class="eyebrow">Angela's Kitchen Ledger</div>
+  <h1>The Weekly Ticket</h1>
+  <div class="sub">1200 cal · high protein · high fiber · gentle on the stomach</div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-view="plan">This Week</button>
+  <button class="tab" data-view="grocery">Grocery List</button>
+</div>
+
+<div id="loading" class="loading">Loading your ledger...</div>
+
+<div id="plan" class="view active"></div>
+
+<div id="grocery" class="view"></div>
+
+<div class="footnote">Saved automatically on this device · edit any meal, the grocery list updates itself</div>
+
+<script>
+const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+
+// ---- Meal option library, built from Angela's actual meals + rotation suggestions ----
+const BREAKFASTS = {
+  "yogurt_classic": { name: "Greek yogurt, chia, flax, protein scoop, raspberries", cal: 320, protein: 34, fiber: 8,
+    benefit: "A protein-and-fiber powerhouse to start the day — the chia and flax add omega-3s and help you stay full into midday.",
+    grocery: [["Plain Greek yogurt (2%)","32 oz tub","dairy"],["Chia seeds","1 bag","pantry"],["Ground flaxseed","1 bag","pantry"],["Protein powder","1 tub","pantry"],["Raspberries","2 containers","produce"]] },
+  "yogurt_cinnamon": { name: "Greek yogurt bowl + cinnamon + almond butter + blueberries", cal: 340, protein: 32, fiber: 7,
+    benefit: "Cinnamon helps steady blood sugar, and almond butter's healthy fat slows digestion so energy lasts longer.",
+    grocery: [["Plain Greek yogurt (2%)","32 oz tub","dairy"],["Chia seeds","1 bag","pantry"],["Almond butter","1 jar","pantry"],["Cinnamon","1 jar","pantry"],["Blueberries","1 container","produce"]] },
+  "yogurt_pumpkin": { name: "Greek yogurt, flax, pumpkin seeds, blackberries", cal: 310, protein: 30, fiber: 8,
+    benefit: "Pumpkin seeds bring magnesium and zinc that yogurt alone doesn't offer — good for recovery if you're active.",
+    grocery: [["Plain Greek yogurt (2%)","32 oz tub","dairy"],["Ground flaxseed","1 bag","pantry"],["Pumpkin seeds","1 bag","pantry"],["Blackberries","1 container","produce"]] },
+  "egg_veg": { name: "2 eggs + spinach + sweet potato hash", cal: 300, protein: 22, fiber: 6,
+    benefit: "A whole-food, dairy-free option — eggs bring complete protein and choline, spinach adds iron and folate.",
+    grocery: [["Eggs","1 dozen","dairy"],["Baby spinach","1 bag","produce"],["Sweet potato","2","produce"]] },
+};
+
+const LUNCHES = {
+  "salad_tuna": { name: "Greens, cucumber, pumpkin seeds, tomato, olive oil-lemon + 3oz tuna", cal: 380, protein: 30, fiber: 9,
+    benefit: "Tuna is your leanest protein-per-calorie option here — great for staying satisfied without spending your budget.",
+    grocery: [["Baby greens / arugula","2 bags","produce"],["English cucumber","1","produce"],["Pumpkin seeds","1 bag","pantry"],["Cherry tomatoes","1 pint","produce"],["Green onion","1 bunch","produce"],["Olive oil","1 bottle","pantry"],["Lemon","3","produce"],["Canned tuna (water)","4-pack","pantry"]] },
+  "salad_chicken": { name: "Same base salad + 3oz rotisserie chicken", cal: 390, protein: 32, fiber: 9,
+    benefit: "Chicken swaps in easily if you want a break from fish — same fiber-rich greens base, similar protein payoff.",
+    grocery: [["Baby greens / arugula","2 bags","produce"],["English cucumber","1","produce"],["Pumpkin seeds","1 bag","pantry"],["Cherry tomatoes","1 pint","produce"],["Green onion","1 bunch","produce"],["Olive oil","1 bottle","pantry"],["Lemon","3","produce"],["Rotisserie chicken","1","meat"]] },
+  "lentil_soup": { name: "Lentil-spinach soup cup + 3oz salmon", cal: 370, protein: 28, fiber: 11,
+    benefit: "The highest-fiber lunch option here — lentils plus salmon's omega-3s make this a gut- and heart-friendly combo.",
+    grocery: [["Canned lentils","2 cans","pantry"],["Baby spinach","1 bag","produce"],["Low-sodium broth","1 carton","pantry"],["Canned wild salmon","2 cans","pantry"]] },
+  "tempeh_bowl": { name: "Tempeh + roasted veg + small quinoa", cal: 400, protein: 26, fiber: 10,
+    benefit: "A fully plant-based option — tempeh is fermented, so it's often gentler on digestion than other soy foods.",
+    grocery: [["Tempeh","1 pack","refrigerated"],["Zucchini","2","produce"],["Quinoa","1 bag","pantry"]] },
+};
+
+const DINNERS = {
+  "lean_greens_salad": { name: "4oz lean meat + dark greens + leftover salad", cal: 340, protein: 34, fiber: 7,
+    benefit: "Dark greens like broccoli bring vitamin K and fiber to close the day, without adding much to your calorie count.",
+    grocery: [["Lean chicken breast or lean beef","1.5 lb","meat"],["Broccoli or green beans","2 bags","produce"],["Garlic","1 head","produce"]] },
+  "roasted_paprika": { name: "4oz meat, smoked paprika rub + roasted Brussels sprouts", cal: 350, protein: 33, fiber: 8,
+    benefit: "Brussels sprouts are a fiber standout among cruciferous veggies — roasting mellows them if raw crucifers bother you.",
+    grocery: [["Lean chicken breast or lean beef","1.5 lb","meat"],["Brussels sprouts","1 bag","produce"],["Smoked paprika","1 jar","pantry"]] },
+  "cumin_sweetpotato": { name: "4oz meat, cumin rub + roasted broccoli + small sweet potato", cal: 380, protein: 33, fiber: 9,
+    benefit: "Sweet potato adds a gentle complex carb for evening energy, plus beta-carotene that lean meat and greens don't provide.",
+    grocery: [["Lean chicken breast or lean beef","1.5 lb","meat"],["Broccoli","2 bags","produce"],["Sweet potato","2","produce"],["Cumin","1 jar","pantry"]] },
+  "herb_greenbeans": { name: "4oz meat, herbes de Provence + steamed green beans", cal: 340, protein: 34, fiber: 7,
+    benefit: "Green beans are mild and easy to digest — a good choice on days your stomach wants something less fibrous.",
+    grocery: [["Lean chicken breast or lean beef","1.5 lb","meat"],["Green beans","1 bag","produce"],["Herbes de Provence","1 jar","pantry"]] },
+};
+
+const SNACKS = {
+  "none": { name: "No snack today", cal: 0, protein: 0, fiber: 0, benefit: "", grocery: [] },
+  "apple_pb": { name: "Small apple + 1 tbsp peanut butter", cal: 150, protein: 4, fiber: 4,
+    benefit: "A classic fiber-plus-fat pairing that curbs hunger between meals without much calorie cost.",
+    grocery: [["Apples","1 bag","produce"],["Peanut butter","1 jar","pantry"]] },
+  "cottage_cheese": { name: "1/2 cup cottage cheese + cucumber slices", cal: 100, protein: 12, fiber: 1,
+    benefit: "A high-protein, low-calorie snack — good if you're short on protein for the day but don't have room for many calories.",
+    grocery: [["Cottage cheese (small curd)","1 tub","dairy"],["English cucumber","1","produce"]] },
+  "hummus_veg": { name: "2 tbsp hummus + carrot and celery sticks", cal: 120, protein: 4, fiber: 4,
+    benefit: "Chickpea-based hummus brings plant protein and fiber together — easy on the stomach in small portions.",
+    grocery: [["Hummus","1 container","refrigerated"],["Carrots","1 bag","produce"],["Celery","1 bunch","produce"]] },
+  "hardboiled_egg": { name: "1 hard-boiled egg + a few berries", cal: 110, protein: 7, fiber: 2,
+    benefit: "Simple and portable — a whole-food protein snack with no prep needed if you've batch-boiled eggs ahead.",
+    grocery: [["Eggs","1 dozen","dairy"],["Raspberries or blueberries","1 container","produce"]] },
+};
+
+const TIPS = [
+  "Rinse canned lentils and beans well — cuts down on the gas-causing compounds and sodium.",
+  "Rotating berries (raspberry → blueberry → blackberry) keeps antioxidant variety without changing your macros.",
+  "Keep dinner's veggie oil to a spritz, not a pour — lunch already carries your fat budget for the day.",
+  "A squeeze of fresh lemon on leftover salad greens keeps texture better than pre-dressing it.",
+  "Cooked veggies (zucchini, carrots, spinach) tend to sit easier than raw cruciferous ones like raw broccoli or cabbage.",
+  "Ginger, mint, and fennel seed are gentle, classic digestion aids — good to keep on hand.",
+];
+
+const DEFAULT_PLAN = () => {
+  const bK = Object.keys(BREAKFASTS), lK = Object.keys(LUNCHES), dK = Object.keys(DINNERS), sK = Object.keys(SNACKS);
+  const plan = {};
+  DAYS.forEach((day, i) => {
+    plan[day] = {
+      breakfast: bK[i % bK.length],
+      lunch: lK[i % lK.length],
+      dinner: dK[i % dK.length],
+      snack: sK[(i % (sK.length - 1)) + 1], // skip "none" as default rotation, but selectable
+    };
+  });
+  return plan;
+};
+
+let plan = {};
+let checkedItems = {};
+let calorieGoal = 1200;
+
+function optionSelect(id, category, currentKey, dayName) {
+  const libs = { breakfast: BREAKFASTS, lunch: LUNCHES, dinner: DINNERS, snack: SNACKS };
+  const lib = libs[category];
+  const opts = Object.entries(lib).map(([k, v]) =>
+    `<option value="${k}" ${k === currentKey ? 'selected' : ''}>${v.name}</option>`
+  ).join('');
+  return `<select id="${id}" onchange="updateMeal('${dayName}','${category}',this.value)">${opts}</select>`;
+}
+
+function benefitLine(category, key) {
+  const libs = { breakfast: BREAKFASTS, lunch: LUNCHES, dinner: DINNERS, snack: SNACKS };
+  const item = libs[category][key];
+  if (!item || !item.benefit) return '';
+  return `<div class="benefit-line">${item.benefit}</div>`;
+}
+
+function renderPlan() {
+  const container = document.getElementById('plan');
+  let totalCal = 0, totalProtein = 0, totalFiber = 0, dayCount = 0;
+
+  let html = '';
+  DAYS.forEach(day => {
+    const d = plan[day];
+    const b = BREAKFASTS[d.breakfast], l = LUNCHES[d.lunch], din = DINNERS[d.dinner], sn = SNACKS[d.snack || 'none'];
+    const dayCal = b.cal + l.cal + din.cal + sn.cal;
+    const dayProtein = b.protein + l.protein + din.protein + sn.protein;
+    const dayFiber = b.fiber + l.fiber + din.fiber + sn.fiber;
+    totalCal += dayCal; totalProtein += dayProtein; totalFiber += dayFiber; dayCount++;
+
+    const dayDiff = dayCal - calorieGoal;
+    const dayDiffColor = Math.abs(dayDiff) <= 50 ? 'var(--gold)' : (dayDiff > 0 ? 'var(--rust)' : 'var(--olive)');
+    html += `
+    <div class="day-card">
+      <div class="day-head">
+        <h3>${day}</h3>
+        <div class="day-cals" style="color:${dayDiffColor};">${dayCal} cal · ${dayProtein}g protein · ${dayFiber}g fiber</div>
+      </div>
+      <div class="meal-row">
+        <div class="meal-label">Breakfast</div>
+        <div>
+          ${optionSelect(`b-${day}`, 'breakfast', d.breakfast, day)}
+          ${benefitLine('breakfast', d.breakfast)}
+        </div>
+        <div class="meal-cals">${b.cal}c</div>
+      </div>
+      <div class="meal-row">
+        <div class="meal-label">Lunch</div>
+        <div>
+          ${optionSelect(`l-${day}`, 'lunch', d.lunch, day)}
+          ${benefitLine('lunch', d.lunch)}
+        </div>
+        <div class="meal-cals">${l.cal}c</div>
+      </div>
+      <div class="meal-row">
+        <div class="meal-label">Dinner</div>
+        <div>
+          ${optionSelect(`d-${day}`, 'dinner', d.dinner, day)}
+          ${benefitLine('dinner', d.dinner)}
+        </div>
+        <div class="meal-cals">${din.cal}c</div>
+      </div>
+      <div class="meal-row">
+        <div class="meal-label">Snack</div>
+        <div>
+          ${optionSelect(`s-${day}`, 'snack', d.snack || 'none', day)}
+          ${benefitLine('snack', d.snack || 'none')}
+        </div>
+        <div class="meal-cals">${sn.cal}c</div>
+      </div>
+    </div>`;
+  });
+
+  const avgCal = Math.round(totalCal / dayCount);
+  const avgProtein = Math.round(totalProtein / dayCount);
+  const avgFiber = Math.round(totalFiber / dayCount);
+  const tip = TIPS[new Date().getDay() % TIPS.length];
+  const diff = avgCal - calorieGoal;
+  const diffLabel = diff === 0 ? 'on target' : (diff > 0 ? `+${diff} over` : `${diff} under`);
+  const diffColor = diff === 0 ? 'var(--olive)' : (Math.abs(diff) <= 50 ? 'var(--gold)' : 'var(--rust)');
+
+  container.innerHTML = `
+    <div class="day-card" style="margin-bottom:18px;">
+      <div class="day-head">
+        <h3 style="font-size:13px;">Daily calorie goal</h3>
+      </div>
+      <div class="meal-row" style="grid-template-columns: 1fr auto;">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" id="calorie-goal-input" value="${calorieGoal}"
+          onchange="updateGoal(this.value)" style="max-width:120px;">
+        <div style="font-size:11px; color:${diffColor}; padding-top:8px; white-space:nowrap;">week avg ${diffLabel}</div>
+      </div>
+    </div>
+    <div class="summary-strip">
+      <div class="summary-chip"><div class="num">${avgCal}</div><div class="label">Avg Cal/Day</div></div>
+      <div class="summary-chip"><div class="num">${avgProtein}g</div><div class="label">Avg Protein</div></div>
+      <div class="summary-chip"><div class="num">${avgFiber}g</div><div class="label">Avg Fiber</div></div>
+    </div>
+    <div class="tip-box"><b>Tip:</b> ${tip}</div>
+    ${html}
+    <button class="btn secondary" onclick="resetPlan()">Reset to default week</button>
+  `;
+}
+
+function buildGroceryList() {
+  const sections = { produce: {}, protein_pantry: {}, dairy: {}, pantry: {}, meat: {}, refrigerated: {} };
+  const catMap = { produce: 'produce', dairy: 'dairy', pantry: 'pantry', meat: 'meat', refrigerated: 'refrigerated' };
+
+  DAYS.forEach(day => {
+    const d = plan[day];
+    [BREAKFASTS[d.breakfast], LUNCHES[d.lunch], DINNERS[d.dinner], SNACKS[d.snack || 'none']].forEach(meal => {
+      meal.grocery.forEach(([item, qty, cat]) => {
+        const bucket = catMap[cat] || 'pantry';
+        if (!sections[bucket][item]) sections[bucket][item] = qty;
+      });
+    });
+  });
+  return sections;
+}
+
+const SECTION_LABELS = {
+  produce: "Produce",
+  dairy: "Dairy & Eggs",
+  meat: "Meat & Poultry",
+  refrigerated: "Refrigerated",
+  pantry: "Pantry & Canned",
+};
+
+function renderGrocery() {
+  const container = document.getElementById('grocery');
+  const sections = buildGroceryList();
+  let html = `<div class="grocery-wrap"><div class="grocery-section">`;
+
+  Object.entries(SECTION_LABELS).forEach(([key, label]) => {
+    const items = sections[key];
+    if (!items || Object.keys(items).length === 0) return;
+    html += `<h3>${label}</h3>`;
+    Object.entries(items).forEach(([item, qty]) => {
+      const itemId = `${key}__${item}`.replace(/\s+/g, '_');
+      const isChecked = checkedItems[itemId];
+      html += `
+      <div class="item-row ${isChecked ? 'checked' : ''}">
+        <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleItem('${itemId}')">
+        <span>${item}</span>
+        <span class="item-qty">${qty}</span>
+      </div>`;
+    });
+  });
+  html += `</div></div>`;
+  html += `<div class="tip-box"><b>Shopping day:</b> generated for Monday morning — covers all 7 days of this week's plan. Change any meal in "This Week" and this list updates automatically.</div>`;
+  html += `<button class="btn" onclick="exportList()">Copy list as text</button>`;
+  html += `<button class="btn secondary" onclick="downloadList()">Download as .txt</button>`;
+  html += `<div id="export-status" style="text-align:center; font-size:11px; color:var(--gold); margin-top:8px;"></div>`;
+  container.innerHTML = html;
+}
+
+function buildListText() {
+  const sections = buildGroceryList();
+  let lines = [`THE WEEKLY TICKET — Grocery List`, `Generated ${new Date().toLocaleDateString()}`, ``];
+  Object.entries(SECTION_LABELS).forEach(([key, label]) => {
+    const items = sections[key];
+    if (!items || Object.keys(items).length === 0) return;
+    lines.push(`${label.toUpperCase()}`);
+    Object.entries(items).forEach(([item, qty]) => {
+      lines.push(`  [ ] ${item} — ${qty}`);
+    });
+    lines.push(``);
+  });
+  return lines.join('\n');
+}
+
+function exportList() {
+  const text = buildListText();
+  const status = document.getElementById('export-status');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      if (status) status.textContent = 'Copied to clipboard';
+    }).catch(() => {
+      if (status) status.textContent = 'Could not copy automatically — try the download button instead';
+    });
+  } else {
+    if (status) status.textContent = 'Clipboard not available — try the download button instead';
+  }
+}
+
+function downloadList() {
+  const text = buildListText();
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'grocery-list.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+async function updateMeal(day, category, value) {
+  plan[day][category] = value;
+  await savePlan();
+  renderPlan();
+  renderGrocery();
+}
+
+async function toggleItem(itemId) {
+  checkedItems[itemId] = !checkedItems[itemId];
+  await saveChecked();
+  renderGrocery();
+}
+
+async function resetPlan() {
+  plan = DEFAULT_PLAN();
+  checkedItems = {};
+  await savePlan();
+  await saveChecked();
+  renderPlan();
+  renderGrocery();
+}
+
+let storageAvailable = true;
+
+async function savePlan() {
+  if (!storageAvailable) return;
+  try {
+    const result = await window.storage.set('meal-plan', JSON.stringify(plan));
+    if (!result) storageAvailable = false;
+  } catch (e) {
+    storageAvailable = false;
+  }
+}
+async function saveChecked() {
+  if (!storageAvailable) return;
+  try {
+    const result = await window.storage.set('grocery-checked', JSON.stringify(checkedItems));
+    if (!result) storageAvailable = false;
+  } catch (e) {
+    storageAvailable = false;
+  }
+}
+
+async function saveGoal() {
+  if (!storageAvailable) return;
+  try {
+    const result = await window.storage.set('calorie-goal', String(calorieGoal));
+    if (!result) storageAvailable = false;
+  } catch (e) {
+    storageAvailable = false;
+  }
+}
+
+async function loadData() {
+  plan = DEFAULT_PLAN();
+  checkedItems = {};
+  calorieGoal = 1200;
+  try {
+    const p = await window.storage.get('meal-plan');
+    if (p && p.value) {
+      const parsed = JSON.parse(p.value);
+      if (parsed && typeof parsed === 'object') plan = parsed;
+    }
+  } catch (e) {
+    // no saved plan yet — default is fine
+  }
+  try {
+    const c = await window.storage.get('grocery-checked');
+    if (c && c.value) {
+      const parsed = JSON.parse(c.value);
+      if (parsed && typeof parsed === 'object') checkedItems = parsed;
+    }
+  } catch (e) {
+    // no saved checklist yet — default is fine
+  }
+  try {
+    const g = await window.storage.get('calorie-goal');
+    if (g && g.value) {
+      const n = parseInt(g.value, 10);
+      if (!isNaN(n) && n > 0) calorieGoal = n;
+    }
+  } catch (e) {
+    // no saved goal yet — default is fine
+  }
+}
+
+async function updateGoal(value) {
+  const n = parseInt(value, 10);
+  calorieGoal = (!isNaN(n) && n > 0) ? n : calorieGoal;
+  await saveGoal();
+  renderPlan();
+}
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.view).classList.add('active');
+  });
+});
+
+(async () => {
+  await loadData();
+  document.getElementById('loading').style.display = 'none';
+  renderPlan();
+  renderGrocery();
+  if (!storageAvailable) {
+    const note = document.createElement('div');
+    note.className = 'footnote';
+    note.style.color = '#b0562e';
+    note.textContent = 'Note: this device can\'t save your changes right now — the plan will reset if you close the tab.';
+    document.body.appendChild(note);
+  }
+})();
+</script>
+</body>
+</html>
