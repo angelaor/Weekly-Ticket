@@ -8,14 +8,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #14130f;
-    --panel: #1c1a15;
-    --cream: #ede8de;
-    --cream-dim: #a8a396;
-    --gold: #c9a34e;
-    --olive: #6b7a56;
-    --rust: #b0562e;
-    --line: #3a362c;
+    --bg: #f3effc;
+    --panel: #ffffff;
+    --cream: #2b3a67;
+    --cream-dim: #6b7599;
+    --gold: #5b6fd8;
+    --olive: #3fa77e;
+    --rust: #d9647a;
+    --line: #ded4f2;
   }
   * { box-sizing: border-box; }
   body {
@@ -86,7 +86,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 12px 16px;
-    background: #221f18;
+    background: #ebe4fa;
     border-bottom: 1px solid var(--line);
   }
   .day-head h3 {
@@ -115,7 +115,7 @@
   }
   select, input[type=text] {
     width: 100%;
-    background: #0f0e0b;
+    background: #f9f7fd;
     color: var(--cream);
     border: 1px solid var(--line);
     font-family: 'DM Mono', monospace;
@@ -173,7 +173,7 @@
   .item-qty { color: var(--cream-dim); font-size: 11.5px; margin-left: auto; }
 
   .tip-box {
-    background: #201d16;
+    background: #ede4fb;
     border-left: 3px solid var(--olive);
     padding: 12px 14px;
     font-size: 12px;
@@ -185,7 +185,7 @@
 
   .btn {
     background: var(--gold);
-    color: #14130f;
+    color: #ffffff;
     border: none;
     font-family: 'Syne', sans-serif;
     font-weight: 700;
@@ -219,6 +219,22 @@
   .summary-chip .label { font-size: 9px; color: var(--cream-dim); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
   .loading { text-align: center; color: var(--cream-dim); font-size: 12px; padding: 20px; }
   .footnote { font-size: 10px; color: var(--cream-dim); text-align: center; margin-top: 24px; line-height: 1.6; }
+  .feedback-btn {
+    position: fixed;
+    bottom: 18px;
+    right: 18px;
+    background: var(--gold);
+    color: #ffffff;
+    border: none;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    padding: 10px 16px;
+    border-radius: 30px;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+    z-index: 100;
+  }
 </style>
 </head>
 <body>
@@ -242,6 +258,8 @@
 
 <div class="footnote">Saved automatically on this device · edit any meal, the grocery list updates itself</div>
 
+<button class="feedback-btn" onclick="sendFeedback()">💬 Send feedback</button>
+
 <script>
 const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
 
@@ -259,6 +277,9 @@ const BREAKFASTS = {
   "egg_veg": { name: "2 eggs + spinach + sweet potato hash", cal: 300, protein: 22, fiber: 6,
     benefit: "A whole-food, dairy-free option — eggs bring complete protein and choline, spinach adds iron and folate.",
     grocery: [["Eggs","1 dozen","dairy"],["Baby spinach","1 bag","produce"],["Sweet potato","2","produce"]] },
+  "yogurt_stonefruit": { name: "Greek yogurt + sliced stone fruit + mixed berries", cal: 300, protein: 28, fiber: 6,
+    benefit: "Stone fruit like peaches or plums adds natural sweetness and vitamin C without the added sugar of syrups or granola.",
+    grocery: [["Plain Greek yogurt (2%)","32 oz tub","dairy"],["Peaches or plums","3","produce"],["Mixed berries","1 container","produce"]] },
 };
 
 const LUNCHES = {
@@ -274,6 +295,9 @@ const LUNCHES = {
   "tempeh_bowl": { name: "Tempeh + roasted veg + small quinoa", cal: 400, protein: 26, fiber: 10,
     benefit: "A fully plant-based option — tempeh is fermented, so it's often gentler on digestion than other soy foods.",
     grocery: [["Tempeh","1 pack","refrigerated"],["Zucchini","2","produce"],["Quinoa","1 bag","pantry"]] },
+  "beet_arugula_chicken": { name: "Roasted beets, arugula, spinach, red onion, cherry tomatoes + chicken thigh", cal: 380, protein: 29, fiber: 8,
+    benefit: "Beets bring nitrates that support circulation, and pairing them with arugula and spinach covers two different leafy green nutrient profiles at once.",
+    grocery: [["Beets","1 bunch","produce"],["Arugula","1 bag","produce"],["Baby spinach","1 bag","produce"],["Red onion","1","produce"],["Cherry tomatoes","1 pint","produce"],["Chicken thighs (boneless, skinless)","1.5 lb","meat"]] },
 };
 
 const DINNERS = {
@@ -289,6 +313,9 @@ const DINNERS = {
   "herb_greenbeans": { name: "4oz meat, herbes de Provence + steamed green beans", cal: 340, protein: 34, fiber: 7,
     benefit: "Green beans are mild and easy to digest — a good choice on days your stomach wants something less fibrous.",
     grocery: [["Lean chicken breast or lean beef","1.5 lb","meat"],["Green beans","1 bag","produce"],["Herbes de Provence","1 jar","pantry"]] },
+  "chicken_thigh_broccoli": { name: "Roasted chicken thigh + broccoli + red onion", cal: 370, protein: 32, fiber: 6,
+    benefit: "Chicken thighs are juicier and more forgiving than breast if you're prone to overcooking — broccoli adds vitamin C and fiber.",
+    grocery: [["Chicken thighs (boneless, skinless)","1.5 lb","meat"],["Broccoli","2 bags","produce"],["Red onion","1","produce"]] },
 };
 
 const SNACKS = {
@@ -305,6 +332,12 @@ const SNACKS = {
   "hardboiled_egg": { name: "1 hard-boiled egg + a few berries", cal: 110, protein: 7, fiber: 2,
     benefit: "Simple and portable — a whole-food protein snack with no prep needed if you've batch-boiled eggs ahead.",
     grocery: [["Eggs","1 dozen","dairy"],["Raspberries or blueberries","1 container","produce"]] },
+  "yogurt_berry_cup": { name: "Small Greek yogurt cup + mixed berries", cal: 130, protein: 12, fiber: 3,
+    benefit: "A light protein top-up between meals — berries keep the sugar content low compared to flavored yogurt cups.",
+    grocery: [["Plain Greek yogurt (2%)","1 small tub","dairy"],["Mixed berries","1 container","produce"]] },
+  "trail_mix": { name: "Walnuts + pumpkin seeds + dried apricots", cal: 145, protein: 4, fiber: 3,
+    benefit: "Walnuts add plant omega-3s and pumpkin seeds bring magnesium and zinc — a nutrient-dense handful for not many calories.",
+    grocery: [["Walnuts","1 bag","pantry"],["Pumpkin seeds","1 bag","pantry"],["Dried apricots","1 bag","pantry"]] },
 };
 
 const TIPS = [
@@ -623,6 +656,18 @@ async function updateGoal(value) {
   renderPlan();
 }
 
+function sendFeedback() {
+  const subject = encodeURIComponent("Weekly Ticket — feedback");
+  const body = encodeURIComponent(
+    "A few quick things to fill in:\n\n" +
+    "1) What confused you or took extra clicks?\n\n" +
+    "2) What did you like?\n\n" +
+    "3) Anything you expected to find but couldn't?\n\n" +
+    "(Feel free to just delete these prompts and write freely.)"
+  );
+  window.location.href = `mailto:angelaor@live.com?subject=${subject}&body=${body}`;
+}
+
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -640,7 +685,7 @@ document.querySelectorAll('.tab').forEach(tab => {
   if (!storageAvailable) {
     const note = document.createElement('div');
     note.className = 'footnote';
-    note.style.color = '#b0562e';
+    note.style.color = '#d9647a';
     note.textContent = 'Note: this device can\'t save your changes right now — the plan will reset if you close the tab.';
     document.body.appendChild(note);
   }
