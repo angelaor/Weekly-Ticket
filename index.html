@@ -91,7 +91,9 @@
   }
   .day-head h3 {
     font-size: 15px;
+    font-weight: 700;
     letter-spacing: 0.05em;
+    color: var(--olive);
   }
   .day-cals {
     font-size: 11px;
@@ -108,6 +110,7 @@
   .meal-row:last-child { border-bottom: none; }
   .meal-label {
     font-size: 10px;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.1em;
     color: var(--olive);
@@ -139,6 +142,31 @@
     padding-left: 2px;
     border-left: 2px solid var(--olive);
     padding-left: 8px;
+  }
+  .custom-block {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .custom-block input {
+    font-size: 12px;
+    padding: 6px 8px;
+  }
+  .custom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+  }
+  .disclaimer-box {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    padding: 12px 14px;
+    font-size: 11px;
+    color: var(--cream-dim);
+    line-height: 1.6;
+    margin-bottom: 18px;
   }
 
   .grocery-wrap {
@@ -265,6 +293,8 @@ const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sun
 
 // ---- Meal option library, built from Angela's actual meals + rotation suggestions ----
 const BREAKFASTS = {
+  "unselected": { name: "-- Select a meal --", cal: 0, protein: 0, fiber: 0, benefit: "", grocery: [] },
+  "custom": { name: "+ Add your own meal", cal: 0, protein: 0, fiber: 0, benefit: "", grocery: [] },
   "yogurt_classic": { name: "Greek yogurt, chia, flax, protein scoop, raspberries", cal: 320, protein: 34, fiber: 8,
     benefit: "A protein-and-fiber powerhouse to start the day — the chia and flax add omega-3s and help you stay full into midday.",
     grocery: [["Plain Greek yogurt (2%)","32 oz tub","dairy"],["Chia seeds","1 bag","pantry"],["Ground flaxseed","1 bag","pantry"],["Protein powder","1 tub","pantry"],["Raspberries","2 containers","produce"]] },
@@ -283,6 +313,8 @@ const BREAKFASTS = {
 };
 
 const LUNCHES = {
+  "unselected": { name: "-- Select a meal --", cal: 0, protein: 0, fiber: 0, benefit: "", grocery: [] },
+  "custom": { name: "+ Add your own meal", cal: 0, protein: 0, fiber: 0, benefit: "", grocery: [] },
   "salad_tuna": { name: "Greens, cucumber, pumpkin seeds, tomato, olive oil-lemon + 3oz tuna", cal: 380, protein: 30, fiber: 9,
     benefit: "Tuna is your leanest protein-per-calorie option here — great for staying satisfied without spending your budget.",
     grocery: [["Baby greens / arugula","2 bags","produce"],["English cucumber","1","produce"],["Pumpkin seeds","1 bag","pantry"],["Cherry tomatoes","1 pint","produce"],["Green onion","1 bunch","produce"],["Olive oil","1 bottle","pantry"],["Lemon","3","produce"],["Canned tuna (water)","4-pack","pantry"]] },
@@ -301,6 +333,8 @@ const LUNCHES = {
 };
 
 const DINNERS = {
+  "unselected": { name: "-- Select a meal --", cal: 0, protein: 0, fiber: 0, benefit: "", grocery: [] },
+  "custom": { name: "+ Add your own meal", cal: 0, protein: 0, fiber: 0, benefit: "", grocery: [] },
   "lean_greens_salad": { name: "4oz lean meat + dark greens + leftover salad", cal: 340, protein: 34, fiber: 7,
     benefit: "Dark greens like broccoli bring vitamin K and fiber to close the day, without adding much to your calorie count.",
     grocery: [["Lean chicken breast or lean beef","1.5 lb","meat"],["Broccoli or green beans","2 bags","produce"],["Garlic","1 head","produce"]] },
@@ -319,6 +353,8 @@ const DINNERS = {
 };
 
 const SNACKS = {
+  "unselected": { name: "-- Select a meal --", cal: 0, protein: 0, fiber: 0, benefit: "", grocery: [] },
+  "custom": { name: "+ Add your own meal", cal: 0, protein: 0, fiber: 0, benefit: "", grocery: [] },
   "none": { name: "No snack today", cal: 0, protein: 0, fiber: 0, benefit: "", grocery: [] },
   "apple_pb": { name: "Small apple + 1 tbsp peanut butter", cal: 150, protein: 4, fiber: 4,
     benefit: "A classic fiber-plus-fat pairing that curbs hunger between meals without much calorie cost.",
@@ -350,14 +386,13 @@ const TIPS = [
 ];
 
 const DEFAULT_PLAN = () => {
-  const bK = Object.keys(BREAKFASTS), lK = Object.keys(LUNCHES), dK = Object.keys(DINNERS), sK = Object.keys(SNACKS);
   const plan = {};
-  DAYS.forEach((day, i) => {
+  DAYS.forEach(day => {
     plan[day] = {
-      breakfast: bK[i % bK.length],
-      lunch: lK[i % lK.length],
-      dinner: dK[i % dK.length],
-      snack: sK[(i % (sK.length - 1)) + 1], // skip "none" as default rotation, but selectable
+      breakfast: "unselected",
+      lunch: "unselected",
+      dinner: "unselected",
+      snack: "unselected",
     };
   });
   return plan;
@@ -379,8 +414,56 @@ function optionSelect(id, category, currentKey, dayName) {
 function benefitLine(category, key) {
   const libs = { breakfast: BREAKFASTS, lunch: LUNCHES, dinner: DINNERS, snack: SNACKS };
   const item = libs[category][key];
-  if (!item || !item.benefit) return '';
+  if (!item || !item.benefit || key === 'custom') return '';
   return `<div class="benefit-line">${item.benefit}</div>`;
+}
+
+function getMealInfo(day, category) {
+  const libs = { breakfast: BREAKFASTS, lunch: LUNCHES, dinner: DINNERS, snack: SNACKS };
+  const key = plan[day][category];
+  if (key === 'custom') {
+    const c = (plan[day].customMeals && plan[day].customMeals[category]) || {};
+    const grocery = (c.groceryText || '').split(',').map(s => s.trim()).filter(Boolean).map(item => [item, '', 'pantry']);
+    return {
+      name: c.name || 'Custom meal',
+      cal: Number(c.cal) || 0,
+      protein: Number(c.protein) || 0,
+      fiber: Number(c.fiber) || 0,
+      benefit: '',
+      grocery,
+    };
+  }
+  return libs[category][key] || libs[category]['unselected'];
+}
+
+function customInputs(day, category, key) {
+  if (key !== 'custom') return '';
+  const c = (plan[day].customMeals && plan[day].customMeals[category]) || {};
+  const esc = (s) => (s || '').replace(/"/g, '&quot;');
+  return `
+    <div class="custom-block">
+      <input type="text" placeholder="Meal name" value="${esc(c.name)}"
+        onchange="updateCustomMeal('${day}','${category}','name',this.value)">
+      <div class="custom-grid">
+        <input type="text" inputmode="numeric" placeholder="Calories" value="${esc(c.cal)}"
+          onchange="updateCustomMeal('${day}','${category}','cal',this.value)">
+        <input type="text" inputmode="numeric" placeholder="Protein (g)" value="${esc(c.protein)}"
+          onchange="updateCustomMeal('${day}','${category}','protein',this.value)">
+        <input type="text" inputmode="numeric" placeholder="Fiber (g)" value="${esc(c.fiber)}"
+          onchange="updateCustomMeal('${day}','${category}','fiber',this.value)">
+      </div>
+      <input type="text" placeholder="Ingredients (comma separated) — adds to grocery list" value="${esc(c.groceryText)}"
+        onchange="updateCustomMeal('${day}','${category}','groceryText',this.value)">
+    </div>`;
+}
+
+async function updateCustomMeal(day, category, field, value) {
+  if (!plan[day].customMeals) plan[day].customMeals = {};
+  if (!plan[day].customMeals[category]) plan[day].customMeals[category] = {};
+  plan[day].customMeals[category][field] = value;
+  await savePlan();
+  renderPlan();
+  renderGrocery();
 }
 
 function renderPlan() {
@@ -390,7 +473,7 @@ function renderPlan() {
   let html = '';
   DAYS.forEach(day => {
     const d = plan[day];
-    const b = BREAKFASTS[d.breakfast], l = LUNCHES[d.lunch], din = DINNERS[d.dinner], sn = SNACKS[d.snack || 'none'];
+    const b = getMealInfo(day, 'breakfast'), l = getMealInfo(day, 'lunch'), din = getMealInfo(day, 'dinner'), sn = getMealInfo(day, 'snack');
     const dayCal = b.cal + l.cal + din.cal + sn.cal;
     const dayProtein = b.protein + l.protein + din.protein + sn.protein;
     const dayFiber = b.fiber + l.fiber + din.fiber + sn.fiber;
@@ -409,6 +492,7 @@ function renderPlan() {
         <div>
           ${optionSelect(`b-${day}`, 'breakfast', d.breakfast, day)}
           ${benefitLine('breakfast', d.breakfast)}
+          ${customInputs(day, 'breakfast', d.breakfast)}
         </div>
         <div class="meal-cals">${b.cal}c</div>
       </div>
@@ -417,6 +501,7 @@ function renderPlan() {
         <div>
           ${optionSelect(`l-${day}`, 'lunch', d.lunch, day)}
           ${benefitLine('lunch', d.lunch)}
+          ${customInputs(day, 'lunch', d.lunch)}
         </div>
         <div class="meal-cals">${l.cal}c</div>
       </div>
@@ -425,14 +510,16 @@ function renderPlan() {
         <div>
           ${optionSelect(`d-${day}`, 'dinner', d.dinner, day)}
           ${benefitLine('dinner', d.dinner)}
+          ${customInputs(day, 'dinner', d.dinner)}
         </div>
         <div class="meal-cals">${din.cal}c</div>
       </div>
       <div class="meal-row">
         <div class="meal-label">Snack</div>
         <div>
-          ${optionSelect(`s-${day}`, 'snack', d.snack || 'none', day)}
-          ${benefitLine('snack', d.snack || 'none')}
+          ${optionSelect(`s-${day}`, 'snack', d.snack, day)}
+          ${benefitLine('snack', d.snack)}
+          ${customInputs(day, 'snack', d.snack)}
         </div>
         <div class="meal-cals">${sn.cal}c</div>
       </div>
@@ -463,9 +550,12 @@ function renderPlan() {
       <div class="summary-chip"><div class="num">${avgProtein}g</div><div class="label">Avg Protein</div></div>
       <div class="summary-chip"><div class="num">${avgFiber}g</div><div class="label">Avg Fiber</div></div>
     </div>
+    <div class="disclaimer-box">
+      This site is intended to support healthy eating habits and general meal planning, not to replace professional medical or nutritional guidance. Please consult your doctor or a registered dietitian before beginning any calorie-restricted or structured meal plan, particularly if you have an existing health condition. This site and its creator make no claims of nutritional or medical expertise and take no responsibility for outcomes related to its use.
+    </div>
     <div class="tip-box"><b>Tip:</b> ${tip}</div>
     ${html}
-    <button class="btn secondary" onclick="resetPlan()">Reset to default week</button>
+    <button class="btn secondary" onclick="resetPlan()">Reset week (clears all meals)</button>
   `;
 }
 
@@ -474,8 +564,7 @@ function buildGroceryList() {
   const catMap = { produce: 'produce', dairy: 'dairy', pantry: 'pantry', meat: 'meat', refrigerated: 'refrigerated' };
 
   DAYS.forEach(day => {
-    const d = plan[day];
-    [BREAKFASTS[d.breakfast], LUNCHES[d.lunch], DINNERS[d.dinner], SNACKS[d.snack || 'none']].forEach(meal => {
+    [getMealInfo(day, 'breakfast'), getMealInfo(day, 'lunch'), getMealInfo(day, 'dinner'), getMealInfo(day, 'snack')].forEach(meal => {
       meal.grocery.forEach(([item, qty, cat]) => {
         const bucket = catMap[cat] || 'pantry';
         if (!sections[bucket][item]) sections[bucket][item] = qty;
