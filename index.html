@@ -168,6 +168,57 @@
     line-height: 1.6;
     margin-bottom: 18px;
   }
+  .feedback-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(43,58,103,0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    padding: 20px;
+  }
+  .feedback-modal {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    max-width: 420px;
+    width: 100%;
+    padding: 20px;
+  }
+  .feedback-modal h3 {
+    font-size: 16px;
+    color: var(--cream);
+    margin-bottom: 6px;
+  }
+  .feedback-sub {
+    font-size: 11.5px;
+    color: var(--cream-dim);
+    margin: 0 0 12px;
+  }
+  .feedback-modal textarea {
+    width: 100%;
+    background: #f9f7fd;
+    color: var(--cream);
+    border: 1px solid var(--line);
+    font-family: 'DM Mono', monospace;
+    font-size: 12.5px;
+    padding: 10px;
+    border-radius: 2px;
+    resize: vertical;
+  }
+  .feedback-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .feedback-actions .btn { margin-top: 0; }
+  .feedback-result {
+    font-size: 11.5px;
+    color: var(--olive);
+    margin-top: 10px;
+    text-align: center;
+  }
 
   .grocery-wrap {
     background: var(--panel);
@@ -286,7 +337,20 @@
 
 <div class="footnote">Saved automatically on this device · edit any meal, the grocery list updates itself</div>
 
-<button class="feedback-btn" onclick="sendFeedback()">💬 Send feedback</button>
+<button class="feedback-btn" onclick="openFeedback()">💬 Send feedback</button>
+
+<div id="feedback-modal" class="feedback-modal-overlay" style="display:none;">
+  <div class="feedback-modal">
+    <h3>Send feedback</h3>
+    <p class="feedback-sub">What confused you? What did you like? Anything missing?</p>
+    <textarea id="feedback-text" rows="6" placeholder="Type your thoughts here..."></textarea>
+    <div class="feedback-actions">
+      <button class="btn secondary" onclick="closeFeedback()">Cancel</button>
+      <button class="btn" onclick="submitFeedback()">Submit</button>
+    </div>
+    <div id="feedback-result" class="feedback-result"></div>
+  </div>
+</div>
 
 <script>
 const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
@@ -745,16 +809,46 @@ async function updateGoal(value) {
   renderPlan();
 }
 
-function sendFeedback() {
-  const subject = encodeURIComponent("Weekly Ticket — feedback");
-  const body = encodeURIComponent(
-    "A few quick things to fill in:\n\n" +
-    "1) What confused you or took extra clicks?\n\n" +
-    "2) What did you like?\n\n" +
-    "3) Anything you expected to find but couldn't?\n\n" +
-    "(Feel free to just delete these prompts and write freely.)"
-  );
-  window.location.href = `mailto:angelaor@live.com?subject=${subject}&body=${body}`;
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/mqevrjbb";
+
+function openFeedback() {
+  document.getElementById('feedback-modal').style.display = 'flex';
+  document.getElementById('feedback-result').textContent = '';
+}
+
+function closeFeedback() {
+  document.getElementById('feedback-modal').style.display = 'none';
+}
+
+async function submitFeedback() {
+  const text = document.getElementById('feedback-text').value.trim();
+  const resultEl = document.getElementById('feedback-result');
+  if (!text) {
+    resultEl.style.color = 'var(--rust)';
+    resultEl.textContent = 'Please write something before submitting.';
+    return;
+  }
+  resultEl.style.color = 'var(--cream-dim)';
+  resultEl.textContent = 'Sending...';
+  try {
+    const response = await fetch(FORMSPREE_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ feedback: text, page: 'The Weekly Ticket' }),
+    });
+    if (response.ok) {
+      resultEl.style.color = 'var(--olive)';
+      resultEl.textContent = 'Thank you — feedback sent!';
+      document.getElementById('feedback-text').value = '';
+      setTimeout(closeFeedback, 1500);
+    } else {
+      resultEl.style.color = 'var(--rust)';
+      resultEl.textContent = 'Something went wrong — please try again.';
+    }
+  } catch (e) {
+    resultEl.style.color = 'var(--rust)';
+    resultEl.textContent = 'Could not send — check your connection and try again.';
+  }
 }
 
 document.querySelectorAll('.tab').forEach(tab => {
