@@ -738,6 +738,21 @@ async function resetPlan() {
   renderGrocery();
 }
 
+// Outside Claude (e.g. on GitHub Pages) there is no window.storage, so keep the
+// week in this browser's own storage instead. Same get/set shape as window.storage.
+if (!window.storage) {
+  window.storage = {
+    async get(key) {
+      const v = localStorage.getItem('weekly-ticket:' + key);
+      return v === null ? null : { key, value: v };
+    },
+    async set(key, value) {
+      localStorage.setItem('weekly-ticket:' + key, value);
+      return { key, value };
+    }
+  };
+}
+
 let storageAvailable = true;
 
 async function savePlan() {
